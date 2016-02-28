@@ -64,6 +64,7 @@ def read_McConnachie12():
         #print "%3d %s %2.1f %2.1f"%(i, mcgalname[i], d[i], vr[i])
         #print i, mcgalname[i], d[i], vr[i]
     vr = vr.astype(float)
+    print 'mcconachie sample size =', len(ra)
     return ra, dec, d, lv
     
 def read_Karachentsev13():
@@ -148,9 +149,8 @@ SGXmm, SGYmm, SGZmm = dmm*eq2000_to_supergal(xmm, ymm, zmm)
 SGS = zip(SGXm,SGYm,SGZm,Lm)
 print 'Karachentsev dataset length =', len(SGS)
 SGSm = zip(SGXmm,SGYmm,SGZmm,Lmm)
-
 seen = set(item[:3] for item in SGS)
-SGS.extend(item for item in SGSm if item[:3] not in seen)
+SGS.extend(item for item in SGSm[:3] if item[:3] not in seen)
 print 'total dataset length =', len(SGS)
 
 
@@ -286,9 +286,9 @@ print "eigenvectors=\n", eigenVectors
 
 radii = 3*np.sqrt(eigenValues)
 print "ellipsoid radii:", radii
-print "Z/X =", (radii[2]/radii[0])
-print "Z/Y =", (radii[2]/radii[1])
-print "Y/X =", (radii[1]/radii[0])
+print "Z/X =", (radii[0]/radii[1])
+print "Z/Y =", (radii[0]/radii[2])
+print "Y/X =", (radii[2]/radii[1])
 rotation = A.T
 
 
@@ -301,8 +301,7 @@ y = radii[1] * np.outer(np.sin(u), np.sin(v))
 z = radii[2] * np.outer(np.ones_like(u), np.cos(v))
 for i in range(len(x)):
     for j in range(len(x)):
-        [x[i,j],y[i,j],z[i,j]] = np.dot([x[i,j],y[i,j],z[i,j]],rotation)+center #BOGEY
-
+        [x[i,j],y[i,j],z[i,j]] = np.dot([x[i,j],y[i,j],z[i,j]],rotation)+center
 
 # plot
 from mpl_toolkits.mplot3d import Axes3D
