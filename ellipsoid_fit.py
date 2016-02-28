@@ -152,6 +152,7 @@ SGSm = zip(SGXmm,SGYmm,SGZmm,Lmm)
 seen = set(item[:3] for item in SGS)
 SGS.extend(item for item in SGSm[:3] if item[:3] not in seen)
 print 'total dataset length =', len(SGS)
+print 'data added from mcconachie:', SGS[-3:]
 
 
 ## FINAL DATA ARRAYS ##
