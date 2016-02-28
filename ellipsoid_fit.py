@@ -27,13 +27,29 @@ def read_McConnachie12():
     datafile = r'data/mcconnachie12.fits'
     data = read_fits(datafile)
     mcgalname = data['Name']
+    Vmag = data['VMag1']
+    vmag = []
+    for i in range(len(Vmag)):
+        vmag.extend(np.fromstring(Vmag[i], sep=" "))
+    #from operator import itemgetter
+    #print min(enumerate(vmag), key=itemgetter(1))[0]
+    #print mcgalname[0]
     # ra and dec 
     RA = data['RAJ2000']; DEC = data['DEJ2000']
     # heliocentric distance in kpc
     D = data['D_MW_']
     d = D.astype(int)
     d[0] = 0; d = d.astype(float)/1000. # kpc-> Mpc
-    vr = data['V_MW_']; vr[0] = 0.; 
+    
+    # V-band luminosity
+    #for i in range(len(vmag)):
+        #vmag[i] = vmag[i] + 5 - 5*np.log10(d[i])
+    lv = [0]*len(vmag)
+    for i in range(len(vmag)):
+        # solar luminosity
+        lv[i] = pow(10, (5.48 - vmag[i])/2.5)
+        
+    vr = data['V_MW_']; vr[0] = 0.;
     ra = np.zeros_like(d); dec = np.zeros_like(d)
     for i in range(len(RA)):
         ras = np.fromstring(RA[i], sep=" ")
@@ -42,18 +58,13 @@ def read_McConnachie12():
             vr[i] = 0.
         else:
             vr[i] = vr[i].astype(float)
-
         ra[i] = (ras[0]*3600.*15.+ ras[1]*60. + ras[2])*np.pi/(180.*3600) # 360/24 = 15
         dec[i] = np.sign(decs[0])*(np.abs(decs[0])*3600.+ 
         decs[1]*60. + decs[2])*np.pi/(180.*3600)
         #print "%3d %s %2.1f %2.1f"%(i, mcgalname[i], d[i], vr[i])
         #print i, mcgalname[i], d[i], vr[i]
-    #Mass calculation
-    #for i in range(len(bm)):
-        # solar luminosity
-     #   L[i] = pow(10, (5.48 - bm[i])/2.5)
     vr = vr.astype(float)
-    return ra, dec, d
+    return ra, dec, d, lv
     
 def read_Karachentsev13():
     datafile = r'data\karachentsev13_BMag.txt'
@@ -81,7 +92,7 @@ def read_Karachentsev13():
     dmax = 30 #MODIFY SELECTION HERE, MAX is 26.2
     Ra, Dec, Dd, M, Ll = zip(*((ra, dec, d, m, L) 
     for ra, dec, d, m, L in zip(ra, dec, d, m, L) if d<dmax))
-    print 'D Selection:', max(Dd), '<', dmax, 'Mpc'  #Sanity check
+    print 'Karachentsev D Selection:', max(Dd), '<', dmax, 'Mpc'  #Sanity check
     return Ra, Dec, Dd, Ll
 
 def eq2000_to_supergal(x, y, z):
@@ -127,22 +138,25 @@ def eq_to_3d(ra, dec):
 
 
 
-ramm, decmm, dmm = read_McConnachie12()
+ramm, decmm, dmm, Lmm = read_McConnachie12()
 ram, decm, dm, Lm = read_Karachentsev13()
 
 xm, ym, zm = eq_to_3d(ram, decm)
 xmm, ymm, zmm = eq_to_3d(ramm, decmm)
 SGXm, SGYm, SGZm = dm*eq2000_to_supergal(xm, ym, zm)
 SGXmm, SGYmm, SGZmm = dmm*eq2000_to_supergal(xmm, ymm, zmm)
-SGS = zip(SGXm,SGYm,SGZm)
-print len(SGS)
-SGSm = zip(SGXmm,SGYmm,SGZmm)
+SGS = zip(SGXm,SGYm,SGZm,Lm)
+print 'Karachentsev dataset length =', len(SGS)
+SGSm = zip(SGXmm,SGYmm,SGZmm,Lmm)
 
 seen = set(item[:3] for item in SGS)
 SGS.extend(item for item in SGSm if item[:3] not in seen)
-print len(SGS)
+print 'total dataset length =', len(SGS)
 
-m = Lm
+
+## FINAL DATA ARRAYS ##
+SGXm, SGYm, SGZm, m = np.asarray(zip(*SGS))
+
 
 #SGXm -= np.average(SGXm); SGYm -= np.average(SGYm); SGZm -= np.average(SGZm)
 ic = [0.,0.,0.] #search center
@@ -224,7 +238,6 @@ def ellfit(XYZ):#EIGENVECTORS
     y = XYZ[:,1]
     z = XYZ[:,2]
     M = np.sum(m)
-    print 'sum of m:', M
     for i in range(len(XYZ)):
        nxx = np.sum(m * x * x) / M #nxx += m[i] * x[i] * x[i] / M
        nyy += m[i] * y[i] * y[i] / M
@@ -258,6 +271,8 @@ def ellfit2(XYZ):#EIGENVALUES
     eigenValues = LA.eigvals(S)
     return eigenValues
     
+### BOOTSTRAPPING ###
+
 
 eigenVectors, eigenValues = ellfit(XYZm)
 print "sqrt eigenvalues =", np.sqrt(eigenValues)
@@ -271,6 +286,9 @@ print "eigenvectors=\n", eigenVectors
 
 radii = 3*np.sqrt(eigenValues)
 print "ellipsoid radii:", radii
+print "Z/X =", (radii[2]/radii[0])
+print "Z/Y =", (radii[2]/radii[1])
+print "Y/X =", (radii[1]/radii[0])
 rotation = A.T
 
 
@@ -284,6 +302,7 @@ z = radii[2] * np.outer(np.ones_like(u), np.cos(v))
 for i in range(len(x)):
     for j in range(len(x)):
         [x[i,j],y[i,j],z[i,j]] = np.dot([x[i,j],y[i,j],z[i,j]],rotation)+center #BOGEY
+
 
 # plot
 from mpl_toolkits.mplot3d import Axes3D
