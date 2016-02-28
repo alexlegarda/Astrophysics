@@ -138,7 +138,7 @@ def eq_to_3d(ra, dec):
 
 
 
-
+## READ AND MERGE DATA ##
 ramm, decmm, dmm, Lmm = read_McConnachie12()
 ram, decm, dm, Lm = read_Karachentsev13()
 
