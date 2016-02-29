@@ -272,19 +272,37 @@ def ellfit2(XYZ):#EIGENVALUES
 ### BOOTSTRAPPING ###
 
 boot = np.array(zip(XYZm[:,0],XYZm[:,1],XYZm[:,2],m))
-print len(boot)
-it = 1000
+it = 10000
 bootvals = [0] * it
 bootvecs = [0] * it
 for i in range(it):
-    strap = boot[np.random.randint(len(boot), size = len(boot)),:]
-    bootvecs[i], bootvals[i] = ellfit(np.array(zip(strap[0], strap[1], strap[2])), np.array(strap[3]))
-    print bootvals[i]
-bootvals = np.asarray(bootvals)
-print bootvals[:,0][0]
+    strap = np.array(boot[np.random.randint(len(boot), size = len(boot)),:])
+    bootvecs[i], bootvals[i] = ellfit(np.array(zip(strap[:,0], strap[:,1], strap[:,2])), np.array(strap[:,3]))
+bootvals = np.array(bootvals)
+
+xyboot = bootvals[:,0] / bootvals[:,1]
+zxboot = bootvals[:,2] / bootvals[:,0]
+zyboot = bootvals[:,2] / bootvals[:,1]
+xystd = np.std(xyboot)
+zxstd = np.std(zxboot)
+zystd = np.std(zyboot)
+xymean = np.mean(xyboot)
+zxmean = np.mean(zxboot)
+zymean = np.mean(zyboot)
+
+print ' '
+print 'Bootstrapping results:'
+print 'iterations =', len(bootvals)
+print 'given as (mean, stdev)'
+print 'X/Y---------------Z/X---------------Z/Y'
+print('(%.4f,%.4f),(%.4f,%.4f),(%.4f,%.4f)'%
+(xymean,xystd,zxmean,zxstd,zymean,zystd))
+print ' '
+
+
+
 
 #m = np.array([1.0] * len(XYZm))
-print len(XYZm)
 eigenVectors, eigenValues = ellfit(XYZm,m)
 sqrteV = np.sqrt(eigenValues)
 print "sqrt eigenvalues =", sqrteV
@@ -301,7 +319,7 @@ radii = 3*sqrteV
 print "ellipsoid radii:", radii
 print "Z/X =", (sqrteV[2]/sqrteV[0])
 print "Z/Y =", (sqrteV[2]/sqrteV[1])
-print "Y/X =", (sqrteV[1]/sqrteV[0])
+print "X/Y =", (sqrteV[0]/sqrteV[1])
 rotation = A.T
 
 
