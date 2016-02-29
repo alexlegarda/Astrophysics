@@ -157,7 +157,7 @@ print 'data added from mcconachie:', SGS[-3:]
 
 ## FINAL DATA ARRAYS ##
 SGXm, SGYm, SGZm, m = np.asarray(zip(*SGS))
-
+m[-3] = pow(10, (5.48 - 19.1)/2.5) #use Karachentsev magnitude for MW
 
 #SGXm -= np.average(SGXm); SGYm -= np.average(SGYm); SGZm -= np.average(SGZm)
 ic = [0.,0.,0.] #search center
@@ -191,7 +191,6 @@ SGZm = np.random.normal(0.0,sigz,npt)
 
 
 XYZm = np.array(zip(SGXm, SGYm, SGZm))
-
 #**TEST**#
 ###REDEFINE XYZ and m FOR TESTING PURPOSES###
 
@@ -225,7 +224,7 @@ XYZm = np.array(zip(SGXm, SGYm, SGZm))
 
 
 
-def ellfit(XYZ):#EIGENVECTORS
+def ellfit(XYZ, m):#EIGENVECTORS
     from numpy import linalg as LA
     nxx = 0.0
     nyy = 0.0
@@ -233,8 +232,6 @@ def ellfit(XYZ):#EIGENVECTORS
     nxy = 0.0
     nyz = 0.0
     nzx = 0.0
-    #m = [1.0] * len(XYZ)
-    r = [0] * len(XYZ)
     x = XYZ[:,0]
     y = XYZ[:,1]
     z = XYZ[:,2]
@@ -274,9 +271,23 @@ def ellfit2(XYZ):#EIGENVALUES
     
 ### BOOTSTRAPPING ###
 
+boot = np.array(zip(XYZm[:,0],XYZm[:,1],XYZm[:,2],m))
+print len(boot)
+it = 1000
+bootvals = [0] * it
+bootvecs = [0] * it
+for i in range(it):
+    strap = boot[np.random.randint(len(boot), size = len(boot)),:]
+    bootvecs[i], bootvals[i] = ellfit(np.array(zip(strap[0], strap[1], strap[2])), np.array(strap[3]))
+    print bootvals[i]
+bootvals = np.asarray(bootvals)
+print bootvals[:,0][0]
 
-eigenVectors, eigenValues = ellfit(XYZm)
-print "sqrt eigenvalues =", np.sqrt(eigenValues)
+#m = np.array([1.0] * len(XYZm))
+print len(XYZm)
+eigenVectors, eigenValues = ellfit(XYZm,m)
+sqrteV = np.sqrt(eigenValues)
+print "sqrt eigenvalues =", sqrteV
 #eigenValues = ellfit2(XYZm)
 print "eigenvalues =", eigenValues
 
@@ -285,11 +296,12 @@ A = np.array(eigenVectors)
 center = [CofMX,CofMY,CofMZ]
 print "eigenvectors=\n", eigenVectors
 
-radii = 3*np.sqrt(eigenValues)
+radii = 3*sqrteV
+
 print "ellipsoid radii:", radii
-print "Z/X =", (radii[0]/radii[1])
-print "Z/Y =", (radii[0]/radii[2])
-print "Y/X =", (radii[2]/radii[1])
+print "Z/X =", (sqrteV[2]/sqrteV[0])
+print "Z/Y =", (sqrteV[2]/sqrteV[1])
+print "Y/X =", (sqrteV[1]/sqrteV[0])
 rotation = A.T
 
 
@@ -316,6 +328,7 @@ ax.set_xlabel('SGX')
 ax.set_ylabel('SGY')
 
 ax.plot_wireframe(x, y, z,  rstride=4, cstride=4, color='r', alpha=0.2)
+
 plt.hold
 print "max(m)=", max(m)
 s = m/max(m)*500
