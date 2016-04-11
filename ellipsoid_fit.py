@@ -219,6 +219,46 @@ XYZm = np.array(zip(SGXm, SGYm, SGZm))
 #CofMX /= np.sum(m); CofMY /= np.sum(m); CofMZ /= np.sum(m)
 #print 'SG CofM of TEST sample = [',CofMX,',', CofMY,',', CofMZ,']'
 
+def Rx(th):
+    Rot = np.zeros((3,3))
+    Rot[0,0] = 1.0; Rot[1,1] = np.cos(th)
+    Rot[1,2] = -np.sin(th); Rot[2,1] = np.sin(th); Rot[2,2] = np.cos(th)
+    return Rot
+ 
+def Ry(th):
+    Rot = np.zeros((3,3))
+    Rot[1,1] = 1.0; Rot[0,0] = np.cos(th)
+    Rot[2,0] = -np.sin(th); Rot[0,2] = np.sin(th); Rot[2,2] = np.cos(th)
+    return Rot
+ 
+def Rz(th):
+    Rot = np.zeros((3,3))
+    Rot[2,2] = 1.0; Rot[0,0] = np.cos(th)
+    Rot[0,1] = -np.sin(th); Rot[1,0] = np.sin(th); Rot[1,1] = np.cos(th)
+    return Rot
+ 
+XYZm = np.array(zip(SGXm, SGYm, SGZm))
+ 
+  
+sigx = 3.0; sigy = 1.0; sigz = 1.0
+npt = 100
+SGXm = np.random.normal(0.0,sigx,npt)
+SGYm = np.random.normal(0.0,sigy,npt)
+SGZm = np.random.normal(0.0,sigz,npt)
+ 
+XYZm = np.array(zip(SGXm, SGYm, SGZm))
+ 
+th = 75.*np.pi/180.
+ 
+Rot = np.dot(np.dot(Rx(th),Ry(th)), Rz(th))
+ 
+XYZm = np.array(zip(SGXm, SGYm, SGZm))
+ 
+ 
+XYZm = np.dot(XYZm,Rot.T)
+ 
+SGXm = XYZm[:,0]; SGYm = XYZm[:,1]; SGZm = XYZm[:,2]
+m = np.array([1.0]*npt)
 
 ###ELLIPSOID FIT###
 
@@ -349,7 +389,7 @@ ax.plot_wireframe(x, y, z,  rstride=4, cstride=4, color='r', alpha=0.2)
 
 plt.hold
 print "max(m)=", max(m)
-s = m/max(m)*500
+s = m/max(m)*100
 ax.scatter(SGXm,SGYm,SGZm, s=s)
 #ax.scatter(XYZm[:,0], XYZm[:,1], XYZm[:,2], s=s)
 
