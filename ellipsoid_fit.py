@@ -219,46 +219,46 @@ XYZm = np.array(zip(SGXm, SGYm, SGZm))
 #CofMX /= np.sum(m); CofMY /= np.sum(m); CofMZ /= np.sum(m)
 #print 'SG CofM of TEST sample = [',CofMX,',', CofMY,',', CofMZ,']'
 
-def Rx(th):
-    Rot = np.zeros((3,3))
-    Rot[0,0] = 1.0; Rot[1,1] = np.cos(th)
-    Rot[1,2] = -np.sin(th); Rot[2,1] = np.sin(th); Rot[2,2] = np.cos(th)
-    return Rot
- 
-def Ry(th):
-    Rot = np.zeros((3,3))
-    Rot[1,1] = 1.0; Rot[0,0] = np.cos(th)
-    Rot[2,0] = -np.sin(th); Rot[0,2] = np.sin(th); Rot[2,2] = np.cos(th)
-    return Rot
- 
-def Rz(th):
-    Rot = np.zeros((3,3))
-    Rot[2,2] = 1.0; Rot[0,0] = np.cos(th)
-    Rot[0,1] = -np.sin(th); Rot[1,0] = np.sin(th); Rot[1,1] = np.cos(th)
-    return Rot
- 
-XYZm = np.array(zip(SGXm, SGYm, SGZm))
- 
-  
-sigx = 3.0; sigy = 1.0; sigz = 1.0
-npt = 100
-SGXm = np.random.normal(0.0,sigx,npt)
-SGYm = np.random.normal(0.0,sigy,npt)
-SGZm = np.random.normal(0.0,sigz,npt)
- 
-XYZm = np.array(zip(SGXm, SGYm, SGZm))
- 
-th = 75.*np.pi/180.
- 
-Rot = np.dot(np.dot(Rx(th),Ry(th)), Rz(th))
- 
-XYZm = np.array(zip(SGXm, SGYm, SGZm))
- 
- 
-XYZm = np.dot(XYZm,Rot.T)
- 
-SGXm = XYZm[:,0]; SGYm = XYZm[:,1]; SGZm = XYZm[:,2]
-m = np.array([1.0]*npt)
+#def Rx(th):
+#    Rot = np.zeros((3,3))
+#    Rot[0,0] = 1.0; Rot[1,1] = np.cos(th)
+#    Rot[1,2] = -np.sin(th); Rot[2,1] = np.sin(th); Rot[2,2] = np.cos(th)
+#    return Rot
+# 
+#def Ry(th):
+#    Rot = np.zeros((3,3))
+#    Rot[1,1] = 1.0; Rot[0,0] = np.cos(th)
+#    Rot[2,0] = -np.sin(th); Rot[0,2] = np.sin(th); Rot[2,2] = np.cos(th)
+#    return Rot
+# 
+#def Rz(th):
+#    Rot = np.zeros((3,3))
+#    Rot[2,2] = 1.0; Rot[0,0] = np.cos(th)
+#    Rot[0,1] = -np.sin(th); Rot[1,0] = np.sin(th); Rot[1,1] = np.cos(th)
+#    return Rot
+# 
+#XYZm = np.array(zip(SGXm, SGYm, SGZm))
+# 
+#  
+#sigx = 10.0; sigy = 5.0; sigz = 5.0
+#npt = 500
+#SGXm = np.random.normal(0.0,sigx,npt)
+#SGYm = np.random.normal(0.0,sigy,npt)
+#SGZm = np.random.normal(0.0,sigz,npt)
+# 
+#XYZm = np.array(zip(SGXm, SGYm, SGZm))
+# 
+#th = 75.*np.pi/180.
+# 
+#Rot = np.dot(np.dot(Rx(th),Ry(th)), Rz(th))
+# 
+#XYZm = np.array(zip(SGXm, SGYm, SGZm))
+# 
+# 
+#XYZm = np.dot(XYZm,Rot.T)
+# 
+#SGXm = XYZm[:,0]; SGYm = XYZm[:,1]; SGZm = XYZm[:,2]
+#m = np.array([1.0]*npt)
 
 ###ELLIPSOID FIT###
 
@@ -319,7 +319,13 @@ for i in range(it):
     strap = np.array(boot[np.random.randint(len(boot), size = len(boot)),:])
     bootvecs[i], bootvals[i] = ellfit(np.array(zip(strap[:,0], strap[:,1], strap[:,2])), np.array(strap[:,3]))
 bootvals = np.array(bootvals)
-
+bootvals.flatten
+for i in range(it):
+    bootvals[i] = np.sort(np.sqrt(bootvals[i]))[::-1]
+#bootvals[:,0] = np.sort(np.array(bootvals[:,0]))
+#bootvals[:,1] = np.sort(np.array(bootvals[:,1]))
+#bootvals[:,2] = np.sort(np.array(bootvals[:,2]))
+print bootvals
 xyboot = bootvals[:,0] / bootvals[:,1]
 zxboot = bootvals[:,2] / bootvals[:,0]
 zyboot = bootvals[:,2] / bootvals[:,1]
@@ -341,7 +347,7 @@ print ' '
 
 
 
-
+print "***ELLIPSOID FIT RESULTS***"
 #m = np.array([1.0] * len(XYZm))
 eigenVectors, eigenValues = ellfit(XYZm,m)
 sqrteV = np.sqrt(eigenValues)
@@ -354,12 +360,18 @@ A = np.array(eigenVectors)
 center = [CofMX,CofMY,CofMZ]
 print "eigenvectors=\n", eigenVectors
 
+#radii = 3*[0]
+#radii[0] = 3*max(sqrteV)
+#radii[2] = 3*np.median(sqrteV)
+#radii[3] = 3*min(sqrteV)
 radii = 3*sqrteV
 
-print "ellipsoid radii:", radii
-print "Z/X =", (sqrteV[2]/sqrteV[0])
-print "Z/Y =", (sqrteV[2]/sqrteV[1])
-print "X/Y =", (sqrteV[0]/sqrteV[1])
+sqrteV = np.array(sqrteV)
+sqrteV[::-1].sort()
+print "ellipsoid radii:", (np.sort(radii)[::-1])
+print 'X/Y--------Z/X--------Z/Y'
+print('(%.4f),(%.4f),(%.4f)'%
+((sqrteV[0]/sqrteV[1]),(sqrteV[2]/sqrteV[0]),(sqrteV[2]/sqrteV[1])))
 rotation = A.T
 
 
@@ -389,7 +401,7 @@ ax.plot_wireframe(x, y, z,  rstride=4, cstride=4, color='r', alpha=0.2)
 
 plt.hold
 print "max(m)=", max(m)
-s = m/max(m)*100
+s = m/max(m)*200
 ax.scatter(SGXm,SGYm,SGZm, s=s)
 #ax.scatter(XYZm[:,0], XYZm[:,1], XYZm[:,2], s=s)
 
